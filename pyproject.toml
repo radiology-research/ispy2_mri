@@ -5,10 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "ispy2-mri"
 dynamic = ["version"]
-description = 'Log receipt of MRI''s into the database'
+description = 'Log receipt of MRI exams into the database'
 readme = "README.md"
 requires-python = ">=3.10"
-license = "GPL-3"
+license = {file = "LICENSE.md"}
 keywords = ["MRI", "imaging", "database", "GUI"]
 authors = [
   { name = "Ross Boylan", email = "ross.boylan@ucsf.edu" },
