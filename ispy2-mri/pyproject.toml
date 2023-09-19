@@ -9,7 +9,7 @@ description = 'Log receipt of MRI's into the database'
 readme = "README.md"
 requires-python = ">=3.10"
 license = "GPL-3"
-keywords = []
+keywords = ["MRI", "imaging", "database", "GUI"]
 authors = [
   { name = "Ross Boylan", email = "ross.boylan@ucsf.edu" },
 ]
@@ -20,6 +20,14 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: Microsoft :: Windows",
+  "Topic :: Database :: Front-Ends",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Topic :: Software Development :: Code Generators",
+  "Environment :: X11 Applications :: Qt",
 ]
 dependencies = ["PySide6", "pyodbc"]
 
