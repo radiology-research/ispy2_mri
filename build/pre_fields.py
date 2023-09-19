@@ -662,7 +662,7 @@ def parse_jsp(sourceFile):
     return parser
 
 parser = parse_jsp(MYDIR / "ispy2.jsp")
-target = Path(__file__).parents[1] / "src" / "ispy2_mri" / "ispy2_mri.py"
+target = Path(__file__).parents[1] / "src" / "ispy2_mri" / "ispy2_gui.py"
 with target.open("wt") as fout:
     parser.make_Qt(fout)
  

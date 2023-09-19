@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "python": "C:\\Users\\rdboylan\\Documents\\breast\\breastdb_entry\\pyenv\\Scripts\\python.exe"
+            //"python": "C:\\Users\\rdboylan\\Documents\\breast\\breastdb_entry\\pyenv\\Scripts\\python.exe"
         }
     ]
 }
