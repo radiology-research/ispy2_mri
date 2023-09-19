@@ -810,8 +810,11 @@ class BreastForm(QDialog):
 		self.outer.addRow('', self.submit)
 
 
-if __name__ == '__main__':
+def launch():
 	app = QApplication(sys.argv)
 	form = BreastForm()
 	form.show()
 	sys.exit(app.exec())
+
+if __name__ == '__main__':
+	launch()

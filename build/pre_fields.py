@@ -633,13 +633,15 @@ class JSPParser(HTMLParser):
         self._qline(ostr, leader, "self.submit.clicked.connect(self.save)\n")
         self._qline(ostr, leader, "self.outer.addRow('', self.submit)\n")
         ostr.write("\n")
-        self._qline(ostr, "", "if __name__ == '__main__':")
+        self._qline(ostr, "", "def launch():")
         leader = "\t"
         self._qline(ostr, leader, "app = QApplication(sys.argv)")
         self._qline(ostr, leader, "form = BreastForm()")
         self._qline(ostr, leader,  "form.show()")
         self._qline(ostr, leader, "sys.exit(app.exec())")
-
+        ostr.write("\n")
+        self._qline(ostr, "", "if __name__ == '__main__':")
+        self._qline(ostr, leader, "launch()")
 
 def parse_jsp(sourceFile):
     """

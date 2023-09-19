@@ -31,6 +31,9 @@ classifiers = [
 ]
 dependencies = ["PySide6", "pyodbc"]
 
+[project.gui-scripts]
+ispy2-mri = "ispy2_mri:launch"
+
 [project.urls]
 Documentation = "https://github.com/unknown/ispy2-mri#readme"
 Issues = "https://github.com/unknown/ispy2-mri/issues"
