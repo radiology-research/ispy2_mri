@@ -6,7 +6,7 @@ from datetime import date, datetime
 import sys
 import pyodbc
 from pathlib import Path
-from flowlayout import FlowLayout
+from ispy2_mri.flowlayout import FlowLayout
 import re
 
 class UnexpectedInputError(Exception):
