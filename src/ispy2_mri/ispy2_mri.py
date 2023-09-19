@@ -5,8 +5,6 @@ from datetime import date, datetime
 import sys
 import pyodbc
 from pathlib import Path
-basePath = Path("breast_entry_app")  ## TODO: change with final package
-sys.path.append(str(basePath))   ### NB TODO: will need to change
 from flowlayout import FlowLayout
 import re
 
@@ -297,16 +295,14 @@ class BCheckBox(QCheckBox, BreastWidget):
 class BreastForm(QDialog):
 
 	def getFile(self) -> str :
-		"prompt user for file with scan parameters. Return path and set parameterFile"
-		# Debugging hard code
-		#(fname, filter) = QFileDialog.getOpenFileName(self, "Scan Parameters File", ".", "Scan Files (*.txt)")
-		fname = "Dummy_test.txt"
-		self.parameterFile = Path(fname)
-		self.fileButton.setText(self.parameterFile.name)
-		self.readFile(self.parameterFile)
-		# and use fake id
-		self.ispy2_id.setText("99998")
-		return fname
+		"prompt user for file with scan parameters. Return path and set parameterFile, or return None"
+		(fname, filter) = QFileDialog.getOpenFileName(self, "Scan Parameters File", ".", "Scan Files (*.txt)")
+		if fname:
+			self.parameterFile = Path(fname)
+			self.fileButton.setText(self.parameterFile.name)
+			self.readFile(self.parameterFile)
+			return fname
+		return None
 
 	paramRE = re.compile(r'^\s*(?P<var>[^:]+)\s*:\s*(?P<val>.*\S)\s*$')
 	def readFile(self, path):

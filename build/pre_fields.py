@@ -130,9 +130,12 @@
 from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
+from pathlib import Path
 import pyodbc
 import re
 import sys
+
+MYDIR = Path(__file__).parent
 
 class Fixer:
     """Perform various special handling to modify default behavior.
@@ -607,7 +610,7 @@ class JSPParser(HTMLParser):
         ostr.write(f"{leader}{line}\n")
 
     def _qpreamble(self, ostr, leader:str = ""):
-        with open("breast_entry_app/pre_fields_preamble.py", "rt") as fin:
+        with (MYDIR / "pre_fields_preamble.py").open("rt") as fin:
             skip = True
             for line in fin:
                 if skip:
@@ -656,7 +659,8 @@ def parse_jsp(sourceFile):
             print(f"{i}: {des}")
     return parser
 
-parser = parse_jsp(r"C:\Users\rdboylan\Documents\breast\bdb\insert\ispy2.jsp")
-with open("tqt.py", "wt") as fout:
+parser = parse_jsp(MYDIR / "ispy2.jsp")
+target = Path(__file__).parents[1] / "src" / "ispy2_mri" / "ispy2_mri.py"
+with target.open("wt") as fout:
     parser.make_Qt(fout)
  
