@@ -1,2 +1,3 @@
 src/ispy2_mri/__pycache__
 dist/
+hatch-prep.ps1
