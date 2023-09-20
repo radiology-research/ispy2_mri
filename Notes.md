@@ -165,3 +165,24 @@ AS
    END
 ```
 So the comma-separated string constructed in the jsp is used literally in a `DELETE` and then pulled apart and each value is inserted into the `ispy2_deviation` table, unless it is already there.
+
+Testing
+=======
+The program won't do anything useful without a lot of setup (see the Prerequisites in the installation instruction), and it's a GUI.  So automatic testing is not feasible, even though `hatch` set up a testing infrastructure.  That said, there are a lot of things to test:
+  * `py pre_fields.py` should generate `ispy2_gui.py` in a different directory.  At least as an academic point, your current working directory should not affect `pre_fields.py` if you leave it in place.
+  * Appropriately uploaded to the public project web site.
+  * Appropriately uploaded to PyPI.
+  * Installable following the instructions.
+  * Runs
+    * by typing program name in a terminal
+    * by clicking on a shortcut if set up
+    * by running ispy2_gui.py directly, in place (e.g., `C:\Users\rdboylan\AppData\Roaming\Python\Python310\site-packages\ispy2_mri\ispy2_gui.py` for me right now)
+  * Inserts data into database.  Verify that with an independent program.
+  * Note that the deviations are kept in a separate table in the database, so check that they are recorded and properly associated with the main record.
+  * The program is likely not robust against exceptional situations:
+    * Invalid dates, like 2/31/2023
+    * Text input file has visit or institution that doesn't line up exactly with existing choices.
+    * Text input file not formatted as expected.
+    * Small screen.
+    * Duplicate entry of the same information.
+    * It will let you enter a received date that is after the returned date.
