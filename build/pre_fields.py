@@ -32,7 +32,6 @@
 
 # The parameter file *may* be missing.
 
-# Undo automatic selection of file for development
 # Review for other todo comments
 # Package
 
@@ -69,6 +68,7 @@
 # visit and site allow typein of new values
 # pull institutions from db for dropdown site.
 # get preferred alternatives and order for visit
+# Undo automatic selection of file for development
 
 # it would be desirable in combo boxes for tab to accept the current value and move to next field
 # at the moment must hit enter to accept and then tab
