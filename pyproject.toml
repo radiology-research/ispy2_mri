@@ -35,9 +35,9 @@ dependencies = ["PySide6", "pyodbc"]
 ispy2-mri = "ispy2_mri:launch"
 
 [project.urls]
-Documentation = "https://github.com/unknown/ispy2-mri#readme"
-Issues = "https://github.com/unknown/ispy2-mri/issues"
-Source = "https://github.com/unknown/ispy2-mri"
+Documentation = "https://github.com/radiology-research/ispy2_mri#readme"
+Issues = "https://github.com/radiology-research/ispy2_mri/issues"
+Source = "https://github.com/radiology-research/ispy2_mri"
 
 [tool.hatch.version]
 path = "src/ispy2_mri/__about__.py"
