@@ -2,6 +2,7 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/ispy2-mri.svg)](https://pypi.org/project/ispy2-mri)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ispy2-mri.svg)](https://pypi.org/project/ispy2-mri)
+[![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
 
 -----
 
