@@ -17,11 +17,12 @@
   - [Developer Notes](#developer-notes)
 
 ## Purpose
-If you are not in UCSF Radiology, it is very unlikely this package is of interest.
 
 This package provide a graphical application to enter information about batches of MRI's as they come in from sites.  The information is saved in the ispy2 database, named `breastdb` on the server.  Some of that information is available electronically, and can be pulled from a plain text file of the user's choice instead of entered manually.
 
 This is a replacement for *one* of the functions currently accessible through a web interface.  That web application can still be used for other things, like generating reports, or even for entering the same information.  However, the web application does not use the information in the plain text files.
+
+If you are not in UCSF Radiology, it is very unlikely this package is of interest.
 
 ## Installation
 
