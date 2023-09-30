@@ -603,14 +603,17 @@ class JSPParser(HTMLParser):
         #self._qsamples(ostr, leader)  # for development
         for s in self.sections:
             s.make_Qt(ostr, leader)
-        self._qcoda(ostr, leader)
+        self._qcoda(ostr)
 
     def _qline(self, ostr, leader:str, line:str):
         "write line to ostr, adding leader at start and \n at end"
         ostr.write(f"{leader}{line}\n")
 
     def _qpreamble(self, ostr, leader:str = ""):
-        with (MYDIR / "pre_fields_preamble.py").open("rt") as fin:
+        return self._include(ostr, leader, MYDIR / "pre_fields_preamble.py")
+
+    def _include(self, ostr, leader:str, file):
+        with (file).open("rt") as fin:
             skip = True
             for line in fin:
                 if skip:
@@ -626,24 +629,8 @@ class JSPParser(HTMLParser):
 
     def _qcoda(self, ostr, leader = ""):
         "standard file end"
-        self._qline(ostr, leader, "self.visit_number.setEditable(True)")
-        #self._qline(ostr, leader, "self.site.setEditable(True)") # no good way to add for now
-        self._qline(ostr, leader, "self.submit = QPushButton('Save')")
-        self._qline(ostr, leader, "self.getFile()  # must be after all input widgets created")
-        self._qline(ostr, leader, "self.submit.clicked.connect(self.save)\n")
-        self._qline(ostr, leader, "self.outer.addRow('', self.submit)\n")
-        ostr.write("\n")
-        self._qline(ostr, "", "def launch():")
-        leader = "\t"
-        self._qline(ostr, leader, "app = QApplication(sys.argv)")
-        self._qline(ostr, leader, "form = BreastForm()")
-        self._qline(ostr, leader, "sa = QScrollArea()")
-        self._qline(ostr, leader, "sa.setWidget(form)")
-        self._qline(ostr, leader, "sa.show()\n")
-        self._qline(ostr, leader, "sys.exit(app.exec())")
-        ostr.write("\n")
-        self._qline(ostr, "", "if __name__ == '__main__':")
-        self._qline(ostr, leader, "launch()")
+        return self._include(ostr, leader, MYDIR / "pre_fields_coda.py")
+
 
 def parse_jsp(sourceFile):
     """
