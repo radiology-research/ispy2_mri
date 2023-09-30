@@ -813,7 +813,10 @@ class BreastForm(QDialog):
 def launch():
 	app = QApplication(sys.argv)
 	form = BreastForm()
-	form.show()
+	sa = QScrollArea()
+	sa.setWidget(form)
+	sa.show()
+
 	sys.exit(app.exec())
 
 if __name__ == '__main__':

@@ -637,7 +637,9 @@ class JSPParser(HTMLParser):
         leader = "\t"
         self._qline(ostr, leader, "app = QApplication(sys.argv)")
         self._qline(ostr, leader, "form = BreastForm()")
-        self._qline(ostr, leader,  "form.show()")
+        self._qline(ostr, leader, "sa = QScrollArea()")
+        self._qline(ostr, leader, "sa.setWidget(form)")
+        self._qline(ostr, leader, "sa.show()\n")
         self._qline(ostr, leader, "sys.exit(app.exec())")
         ostr.write("\n")
         self._qline(ostr, "", "if __name__ == '__main__':")
