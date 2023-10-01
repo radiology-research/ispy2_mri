@@ -771,7 +771,7 @@ class BreastForm(QDialog):
 		box.addWidget(self.final_processing_aegis)
 		group.setLayout(box)
 		self.outer.addRow("Final (official) processing done by UCSF?", group)
-		self.comments = BTextEdit(self, 4, 60)
+		self.comments = BTextEdit(self, 3, 60)
 		self._fields['comments'] = self.comments
 		group = self.comments
 		self.outer.addRow("Comments", group)

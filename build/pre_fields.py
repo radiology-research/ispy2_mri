@@ -237,6 +237,11 @@ class Fixer:
         if fld._name == "scan_duration":
             fld.setConstruct("BNumEdit(p=5, s=2)")
             return False
+        if fld._name == "comments":
+            # 4 rows in the jsp specification, but space is tight.
+            # The BTextEdit widget can expand, but the next value limits how 
+            # far it can contract.
+            fld._rows = 3
         return self.skipDatesRE.match(fld._name) or \
             fld._name in ("deviation", "deviation_other_reason")
 
