@@ -15,7 +15,7 @@ This describes user-visible changes, not changes to the internals.
 
 ### Fixed
 
-- Fixed item
+- Failure when no deviation reasons selected, issue #3.
 
 ### Removed
 

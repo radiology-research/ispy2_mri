@@ -505,7 +505,12 @@ class BreastForm(QDialog):
 		"""return a string with all checked ids for discrepancies
 		This is the format expected the insert_ispy2_deviation stored procedure.
 		"""
-		return ", ".join(str(w.val()) for w in self._discrep_widgets())
+		r = ", ".join(str(w.val()) for w in self._discrep_widgets())
+		if r:
+			return r
+		else:
+			# The empty string will cause a syntax error
+			return "null"
 
 	def write(self):
 		"""
@@ -588,6 +593,7 @@ class BreastForm(QDialog):
 		self.setLayout(self.outer)
 		self.DSN = 'breastdb-new'
 		self.conn = pyodbc.connect(f"DSN={self.DSN}")  #passwordless login
+		# self.conn.autocommit == False by default, which we want
 		self.curs = self.conn.cursor()
 
 		self.siteRecs = []
