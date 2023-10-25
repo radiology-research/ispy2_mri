@@ -10,7 +10,7 @@
             "name": "Python Debug current file",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             //"python": "C:\\Users\\rdboylan\\Documents\\breast\\breastdb_entry\\pyenv\\Scripts\\python.exe"
         }
     ]

@@ -1,13 +1,32 @@
 # This is a fragment for inclusion by pre_fields.py
 # based on https://doc.qt.io/qtforpython-6/tutorials/basictutorial/dialog.html
+# error handling based on https://timlehr.com/2018/01/python-exception-hooks-with-qt-message-box/
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Slot, QSize
 from datetime import date, datetime
+import logging
 import sys
+import traceback
 import pyodbc
 from pathlib import Path
 from ispy2_mri.flowlayout import FlowLayout
 import re
+
+# set up logging to the terminal
+log = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=sys.stdout)
+log.addHandler(handler)
+
+
+def show_exception_box(log_msg):
+	"""Checks if a QApplication instance is available and shows a messagebox with the exception message.
+	Logs the notice to terminal if no GUI (which should be impossible).
+	"""
+	if QApplication.instance() is not None:
+			QMessageBox.critical(None, "Fatal Error--No data saved",
+				"An unexpected error occurred:\n{0}\n\nThis program will exit when you click OK.\n".format(log_msg))
+	else:
+		log.critical(log_msg)
 
 class UnexpectedInputError(Exception):
 	def __init__(self, obj=None):
@@ -102,14 +121,13 @@ class BSmallDateWidget(QWidget, BreastWidget):
 	def date(self) -> date:
 		"May also return None"
 		ymd = 	(self._yrwidg.currentText().strip(),
-	    		self._mowidg.currentText().strip(),
+				self._mowidg.currentText().strip(),
 		  		self._dawidg.currentText().strip())
 		if all(x.isdigit() for x in ymd):
 			try:
 				return date(*(int(x) for x in ymd))
 			except ValueError as err:
 				pass
-		QMessageBox.warning(self, "bad date", "-".join(ymd))
 		return None
 	
 	def isValid(self) -> bool:
@@ -403,7 +421,7 @@ class BreastForm(QDialog):
 		"""
 		i = form.rowCount()-1
 		self._automatics.append(i)
-		# Testing: show everything
+		# show everything
 		#form.setRowVisible(i, False)
 
 	def is_sane(self):
@@ -414,7 +432,7 @@ class BreastForm(QDialog):
 		bad = [k for (k, v) in self._fields.items() if not v.isValid()]
 		if bad:
 			QMessageBox.warning(self, "You must fix fields before saving", 
-		       "Errors in "+", ".join(bad))
+			   "Errors in "+", ".join(bad))
 			return False
 		return True
 
@@ -482,17 +500,45 @@ class BreastForm(QDialog):
 			"report_received_code",
 			"id"
    		)
-		# fields not present on form
+		# fields not present on form or
 		# on web form, but currently left blank: 'special_handling', 'aegis_issues' (checkboxes)
 		# 'deviation_other_reason'
+		# or otherwise requiring special handling
 		# `mri_code` is alway mdy
 		# 'report_returned_code' and 'report_received_code' either mdy or uk if the date is blank
-		missing_fields = ['mri_code', 'deviation_other_reason', 'special_handling', 'aegis_issues', 
+		special_fields = ['mri_code', 'deviation_other_reason', 'special_handling', 'aegis_issues', 
 			'report_returned_date', 'report_returned_code', 'report_received_date',
 			'report_received_code', 'id']
 		self.make_sane()
-		return [self._fields[k].todb() if k in self._fields else None for k in ordered_fields]
+		return [self._db_special(k) for k in ordered_fields]
 	
+	def _datecode(self, wdgt:BSmallDateWidget)->str:
+		"Return an appropriate code for the date"
+		if wdgt.todb():
+			return 'mdy'
+		return 'uk'
+	
+	def _db_special(self, field:str):
+		"""
+		Return a value to insert in the database for a field
+		"""
+		match field:
+			# first 2 only here because lose the _date
+			case 'report_received_date':
+				return self.report_received.todb()
+			case 'report_returned_date':
+				return self.report_returned.todb()
+			case 'report_received_code':
+				return self._datecode(self.report_received)
+			case 'report_returned_code':
+				return self._datecode(self.report_returned)
+			case 'mri_code':
+				return self._datecode(self.mri_date)
+		# none of special cases matched
+		if field in self._fields:
+			return self._fields[field].todb()
+		return None
+
 	def _discrep_widgets(self):
 		"""Generator returning all checked discrepancy widgets.
 		Returns any widget named discrep\d+.  No particular order is guaranteed.
@@ -510,7 +556,7 @@ class BreastForm(QDialog):
 		if r:
 			return r
 		else:
-			# The empty string will cause a syntax error
+			# The empty string will cause a syntax error on server side
 			return "null"
 	
 	def write(self):
@@ -580,16 +626,40 @@ class BreastForm(QDialog):
 			"{call insert_ispy2_deviation(?,?)}", (ispy2_tbl_id, discrepvals)
 		)
 		self.curs.commit()
+		QMessageBox.information(None, "Successful write to database",
+						  f"""The new record is id={ispy2_tbl_id} in the ispy2 table.
+Additional values may have been changed in the ispy2_deviations table.""")
 		return True
 	
 	@Slot()
 	def save(self):
 		self.write()
 
+	def exception_hook(self, exc_type, exc_value, exc_traceback):
+		"""Function handling uncaught exceptions.
+		It is triggered each time an uncaught exception occurs. 
+		"""
+		if issubclass(exc_type, KeyboardInterrupt):
+			# ignore keyboard interrupt to support console applications
+			sys.__excepthook__(exc_type, exc_value, exc_traceback)
+		else:
+			exc_info = (exc_type, exc_value, exc_traceback)
+			log_msg = '\n'.join([''.join(traceback.format_tb(exc_traceback)),
+					'{0}: {1}'.format(exc_type.__name__, exc_value)])
+			self.curs.rollback()  # cancel transaction and release lock
+			show_exception_box(log_msg)
+			QApplication.instance().exit(1)
+
+			#log.critical("Uncaught exception:\n {0}".format(log_msg), exc_info=exc_info)
+
+			# trigger message box show
+			#self._exception_caught.emit(log_msg)
+
 	def __init__(self, parent=None):
 		super(BreastForm, self).__init__(parent)
 		self._automatics = []  # layout row indices for material to obtain from parameterFile
 		self._fields = {}  # keys are field names, values are BreastWidgets
+		sys.excepthook = self.exception_hook  # establish error handling
 		self.outer = QFormLayout(self)
 		self.setLayout(self.outer)
 		self.DSN = 'breastdb-new'
