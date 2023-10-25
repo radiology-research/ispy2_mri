@@ -2,6 +2,24 @@
 
 This describes user-visible changes, not changes to the internals.
 
+## [0.1.0] - prerelease
+
+### Added
+
+- Add item
+
+### Changed
+
+- Change item
+
+### Fixed
+
+- Fixed item
+
+### Removed
+
+- Remove item
+
 
 ## [0.0.7] - 2023-10-25 - Ross Boylan <ross.boylan@ucsf.edu>
 
