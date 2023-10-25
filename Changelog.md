@@ -3,7 +3,7 @@
 This describes user-visible changes, not changes to the internals.
 
 
-## [0.0.7] - 2023-10-25 - Ross Boylan <ross.boylan@ucsf.edu>prerelease
+## [0.0.7] - 2023-10-25 - Ross Boylan <ross.boylan@ucsf.edu>
 
 ### Added
 
