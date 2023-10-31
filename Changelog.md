@@ -6,11 +6,15 @@ This describes user-visible changes, not changes to the internals.
 
 ### Added
 
-- Add item
+- Clear all fields after `save` and before reading in a new parameter file.  Closes #6.
+  Why both?  Someone might make some entries in the form, accidentally or
+  deliberately, after hitting `save` and before reading in a new file.
 
 ### Changed
 
-- Change item
+- Site now starts blank, and has an "Other" option. (Fixes #10 after changing goal)
+- Visit starts blank and allows selection set to blank (tangential hit #11).
+- Need to review if Site Other can be written to db.
 
 ### Fixed
 

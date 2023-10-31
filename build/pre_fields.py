@@ -30,10 +30,10 @@
     # report_returned_code is uk -> report_returned_date = NULL
     # report_received_code is uk -> report_received_date = NULL
 
-# The parameter file *may* be missing.
 
 # Review for other todo comments
 # Package
+# https://github.com/radiology-research/ispy2_mri/issues
 
 ## For Jessica
 # Name of program: ispy2_breastdb_entry?
@@ -50,6 +50,7 @@
 # enter and then tab, would like to just hit tab.
 
 ## Done
+# The parameter file *may* be missing.
 # Add commit to db transaction
 # add site numbers to site pulldown and use them for db insertion
 # pull values from GUI + insert in db
@@ -224,7 +225,7 @@ class Fixer:
         "return True if field should not appear. May also edit field."
         if fld._name == "visit_number":
             # Yes, in this order
-            fld.replace_choices(["1", "A3w", "A6w", "A12w", "B3w", "B6w", "B12w",
+            fld.replace_choices(["", "1", "A3w", "A6w", "A12w", "B3w", "B6w", "B12w",
                                  "S1", "5", "2", "2.5", "3", "3.5", "4"])
             return False
         # site needs more work and is not a LineEdit

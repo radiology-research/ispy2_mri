@@ -64,6 +64,11 @@ class BreastWidget:
 		# default implementaiton
 		self.fromdb(v)
 
+	def clear(self):
+		"set to blank or initial state"
+		# default implementation
+		self.fromtext("")
+
 	def isValid(self):
 		"return True if I contain a valid value"
 		return True
@@ -146,6 +151,9 @@ class BSmallDateWidget(QWidget, BreastWidget):
 		self._mowidg.setCurrentIndex(-1)
 		self._dawidg.setCurrentIndex(-1)
 
+	def clear(self):
+		self.setNoDate()
+
 	def fromtext(self, txt):
 		if len(txt.strip()) == 0:
 			self.setNoDate()
@@ -227,6 +235,10 @@ class BComboBox(QComboBox, BreastWidget):
 	def fromdb(self, v):
 		self.setEditText(v)
 
+	def clear(self):
+		self.setEditText("")
+		self.setCurrentIndex(-1)
+
 
 class BSiteComboBox(BComboBox):
 	"""
@@ -250,6 +262,8 @@ class BSiteComboBox(BComboBox):
 		for rec in data:
 			label = f"{rec[1]:6d} | {rec[2]}"
 			self.addItem(label, rec)
+		self.addItem("Other (put site info in comment)", None)
+		self.setCurrentIndex(-1)
 
 	def todb(self):
 		"must be something that was on the list"
@@ -309,6 +323,9 @@ class BCheckBox(QCheckBox, BreastWidget):
 				self.setChecked(False)
 		# otherwise do nothing. maybe throw error
 
+	def clear(self):
+		self.setChecked(False)
+
 
 class BreastForm(QDialog):
 
@@ -316,6 +333,7 @@ class BreastForm(QDialog):
 		"prompt user for file with scan parameters. Return path and set parameterFile, or return None"
 		(fname, filter) = QFileDialog.getOpenFileName(self, "Scan Parameters File", ".", "Scan Files (*.txt)")
 		if fname:
+			self.clear()
 			self.parameterFile = Path(fname)
 			self.fileButton.setText(self.parameterFile.name)
 			self.readFile(self.parameterFile)
@@ -628,11 +646,18 @@ class BreastForm(QDialog):
 		QMessageBox.information(None, "Successful write to database",
 						  f"""The new record is id={ispy2_tbl_id} in the ispy2 table.
 Additional values may have been changed in the ispy2_deviations table.""")
+		self.clear()
+		self.fileButton.setText("Select File")
 		return True
 
 	@Slot()
 	def save(self):
 		self.write()
+
+	def clear(self):
+		"blank all fields"
+		for w in self._fields.values():
+			w.clear()
 
 	def exception_hook(self, exc_type, exc_value, exc_traceback):
 		"""Function handling uncaught exceptions.
@@ -685,7 +710,7 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		self.ispy2_id = BLineEdit()
 		self._fields['ispy2_id'] = self.ispy2_id
 		self.visit_number = BComboBox()
-		self.visit_number.addItems(["1", "A3w", "A6w", "A12w", "B3w", "B6w", "B12w", "S1", "5", "2", "2.5", "3", "3.5", "4"])
+		self.visit_number.addItems(["", "1", "A3w", "A6w", "A12w", "B3w", "B6w", "B12w", "S1", "5", "2", "2.5", "3", "3.5", "4"])
 		self._fields['visit_number'] = self.visit_number
 		group = QGroupBox()
 		box = FlowLayout()
