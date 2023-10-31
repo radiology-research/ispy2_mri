@@ -14,7 +14,7 @@ This describes user-visible changes, not changes to the internals.
 
 - Site now starts blank, and has an "Other" option. (Fixes #10 after changing goal)
 - Visit starts blank and allows selection set to blank (tangential hit #11).
-- Need to review if Site Other can be written to db.
+
 
 ### Fixed
 

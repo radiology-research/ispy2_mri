@@ -269,7 +269,10 @@ class BSiteComboBox(BComboBox):
 		"must be something that was on the list"
 		if self.currentIndex() < 0:
 			return None
-		return self.currentData()[1]
+		x = self.currentData()
+		if x:
+			return x[1]
+		return None
 
 	def fromdb(self, v):
 		"v will be the site id"
