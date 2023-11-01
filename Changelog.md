@@ -6,14 +6,17 @@ This describes user-visible changes, not changes to the internals.
 
 ### Added
 
-- Clear all fields after `save` and before reading in a new parameter file.  Closes #6.
+- Clear all fields after `Save` and before reading in a new parameter file.  Closes #6.
   Why both?  Someone might make some entries in the form, accidentally or
-  deliberately, after hitting `save` and before reading in a new file.
+  deliberately, after hitting `Save` and before reading in a new file.
+- Improved handling when input file's `Site` or `Visit` don't match allowed values (part of #11)
+  - Boxes that don't match have red text of  `?` followed by the value in file on yellow background
+  - With explanatory tooltip
 
 ### Changed
 
-- Site now starts blank, and has an "Other" option. (Fixes #10 after changing goal)
-- Visit starts blank and allows selection set to blank (tangential hit #11).
+- Site now starts blank (not `Georgetown`), and has an "Other" option. (Fixes #10 after changing goal)
+- Visit starts blank (not `1`) and allows selection set to blank (tangential hit #11).
 
 
 ### Fixed

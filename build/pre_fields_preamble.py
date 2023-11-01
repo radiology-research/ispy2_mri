@@ -61,7 +61,10 @@ class BreastWidget:
 		pass
 
 	def fromtext(self, v: str):
-		"set value of widget from a textual value of v, e.g., from a text file"
+		"""
+		set value of widget from a textual value of v, e.g., from a text file
+		Note: May throw UnexpectedInputError using v as the value
+		"""
 		# default implementaiton
 		self.fromdb(v)
 
@@ -229,6 +232,7 @@ class BNumEdit(BLineEdit):
 class BComboBox(QComboBox, BreastWidget):
 	def __init__(self, parent=None):
 		QComboBox.__init__(self, parent)
+		self.currentIndexChanged.connect(self.noteIndexChanged)
 
 	def todb(self):
 		return self.currentText()
@@ -236,9 +240,43 @@ class BComboBox(QComboBox, BreastWidget):
 	def fromdb(self, v):
 		self.setEditText(v)
 
+	def fromtext(self, v: str):
+		if v:
+			self.setEditText(v)
+		else:
+			self.clear()
+			# NB: do not raise exception
+			return
+		if self.currentIndex()>=0:
+			# real data, successfully set
+			# noteIndexedChange should be triggered automatically and clean up
+			return
+		# No match
+		self.setPlaceholderText(f"? {v}")
+		self.setToolTip(f"Unrecognized text. Please select from drop-down.")
+		self.setStyleSheet("""BComboBox {background-color: yellow}
+					 BComboBox {color: red}
+					 """)
+		raise UnexpectedInputError(v)
+	
+	@Slot()
+	def noteIndexChanged(self, i):
+		# handling of non-selection varies by context
+		# so we do nothing here
+		if i < 0:
+			return
+		# otherwise, a valid data selection has been made
+		# undo all the weird stuff
+		self.setToolTip("")
+		self.setStyleSheet("")
+		# leave placeholder text, which should be invisible
+
+
+
 	def clear(self):
 		self.setEditText("")
 		self.setCurrentIndex(-1)
+		self.setToolTip("Please make a selection.")
 
 
 class BSiteComboBox(BComboBox):
@@ -288,12 +326,16 @@ class BSiteComboBox(BComboBox):
 		"v is a site name.  It probably won't be an exact match"
 		for i in range(self.count()):
 			r = self.itemData(i)
-			if r[2] == v:
+			if r and r[2] == v:
 				self.setCurrentIndex(i)
 				return
-		# not good if we get here, but for now we let it go
 		self.setCurrentIndex(-1)
-		pass  # mostly here so can set breakpoint
+		self.setPlaceholderText(f"? {v}")
+		self.setToolTip(f"Unrecognized site. Please select from drop-down.")
+		self.setStyleSheet("""BSiteComboBox {background-color: yellow}
+					 BSiteComboBox {color: red}
+					 """)
+		raise UnexpectedInputError(v)
 
 class BCheckBox(QCheckBox, BreastWidget):
 	def __init__(self, parent=None, asText=True, val=None):
@@ -362,11 +404,15 @@ class BreastForm(QDialog):
 						case 'Date':
 							self.mri_date.fromtext(v)
 						case 'Visit ID':
-							self.visit_number.setCurrentText(v)
+							try:
+								self.visit_number.fromtext(v)
+							except UnexpectedInputError as e:
+								pass
 						case 'Institution':
-							# it would be good to do something other than put if the string
-							# is not an exact match.  At least display it to user in some way.
-							self.site.fromtext(v)
+							try:
+								self.site.fromtext(v)
+							except UnexpectedInputError as e:
+								pass
 						case 'Breast':
 							self.breast.setCurrentText(v.lower())
 						case 'Tumor Volume':
