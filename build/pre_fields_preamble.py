@@ -522,7 +522,7 @@ class BreastForm(QDialog):
 		return {fld: widg.todb() for fld, widg in self._fields.items()}
 	
 	def db_values(self):
-		"""return iterable with values in correct order for db query
+		"""return generator with values in correct order for db query
 		Some of the requested fields are not on the form (or in some cases have a different name).
 		Those will require some special handling, but for now they are all None.
 		Note that the final field, id, is an output of the stored procedure.
@@ -577,7 +577,8 @@ class BreastForm(QDialog):
 			'report_returned_date', 'report_returned_code', 'report_received_date',
 			'report_received_code', 'id']
 		self.make_sane()
-		return [self._db_special(k) for k in ordered_fields]
+		for k in ordered_fields:
+			yield from self._db_special(k)
 	
 	def _datecode(self, wdgt:BSmallDateWidget)->str:
 		"Return an appropriate code for the date"
@@ -587,24 +588,29 @@ class BreastForm(QDialog):
 	
 	def _db_special(self, field:str):
 		"""
-		Return a value to insert in the database for a field
+		yield a value to insert in the database for a field
+
+		Because we are yielding rather than returning, must ensure only
+		one yield executes.
 		"""
 		match field:
 			# first 2 only here because lose the _date
 			case 'report_received_date':
-				return self.report_received.todb()
+				yield self.report_received.todb()
 			case 'report_returned_date':
-				return self.report_returned.todb()
+				yield self.report_returned.todb()
 			case 'report_received_code':
-				return self._datecode(self.report_received)
+				yield self._datecode(self.report_received)
 			case 'report_returned_code':
-				return self._datecode(self.report_returned)
+				yield self._datecode(self.report_returned)
 			case 'mri_code':
-				return self._datecode(self.mri_date)
-		# none of special cases matched
-		if field in self._fields:
-			return self._fields[field].todb()
-		return None
+				yield self._datecode(self.mri_date)
+			case _:
+				# none of special cases matched
+				if field in self._fields:
+					yield self._fields[field].todb()
+				else:
+					yield None
 
 	def _discrep_widgets(self):
 		"""Generator returning all checked discrepancy widgets.
@@ -683,7 +689,8 @@ class BreastForm(QDialog):
 		vals = self.db_values()
 		self.curs.execute(
 			"{call rb_insert_ispy2(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}",
-			vals
+			# when vals is a generator must use *; otherwise it's considered a single argument
+			*vals
 		)
 		self.curs.nextset()  # otherwise get Previous SQL was not a query
 		ispy2_tbl_id = self.curs.fetchone().ispy2_tbl_id
