@@ -199,10 +199,17 @@ class Fixer:
                 # no point in repeating the label
                 inp.disableLabel()
                 # and proceed with further processing
-        if section.des2[0] == "Site":
-            # rewrite
-            section.replaceInput(DynamicComboField("site", "siteRecs"))
-            return False
+        match section.des2[0]:
+            case "Site":
+                # rewrite
+                section.replaceInput(DynamicComboField("site", "siteRecs"))
+                return False
+            case "Auto Timing":
+                oldfields = section.inputs
+                section.inputs = []
+                section.addInput(AutoTimingField(*(oldfields[0:3])))
+                section.addInput(AutoTimingField(*(oldfields[3:6])))
+                return False
         return section.des2[0] in ("Special Handling necessary (header reading, other)",
                                    "Problems loading on AEGIS" )
     
@@ -487,13 +494,20 @@ class SelectField(AbstractField):
     def __str__(self):
         return f"Select({self._name}: {', '.join(self._choices)})"
     
-    def make_Qt(self, ostr, leader):
-        ### ToDo
-        ostr.write(f'{leader}self.{self._name} = BComboBox()\n')
+    def optionString(self):
+        """
+        allowed options as string suitable for interpolation in python code.
+        E.g. if the choice are "a" or "b", return
+        '["a", "b"]`
+        """
         # trying to do next 2 lines in a single line causes a hang
         altstrings = [f'"{v}"' for v in self._choices]
         altstrings = ", ".join(altstrings)
-        ostr.write(f'{leader}self.{self._name}.addItems([{altstrings}])\n')
+        return "["+altstrings+"]"
+
+    def make_Qt(self, ostr, leader):
+        ostr.write(f'{leader}self.{self._name} = BComboBox()\n')
+        ostr.write(f'{leader}self.{self._name}.addItems({self.optionString()})\n')
         ostr.write(f"{leader}self._fields['{self._name}'] = self.{self._name}\n")
         return self._name
 
@@ -543,6 +557,47 @@ class DynamicComboField:
         #ostr.write(f'{leader}self.{self._name}.addItems(self.{self._dynamic})\n')
         ostr.write(f"{leader}self._fields['{self._name}'] = self.{self._name}\n")
         return self._name
+    
+class AutoTimingField:
+    """
+    Groups together minutes, seconds, and option for automatic timing.
+    Creates BAutoTimingWidget.
+
+    This does some fancy footwork, combining individual fields that
+    were scheduled to be  at a higher level.  Fixer.sectionDrop() 
+    creates this object while clearing out the old individual field
+    specifications.
+    """
+    nameRE = re.compile(r"auto_timing(\d)_(\w+)")
+    def __init__(self, fldmin, fldsec, fldoption):
+        """
+        the arguments are field specifications pulled out of the section
+        infers the sequence number from the names of those fields.
+
+        The only thing we actually use from the old fields is the sequence
+        number and the list of alternatives for fldoption.
+        """
+        self.seq = None
+        self._specs = []  # holds AbstractFields for individual components
+        for f in (fldmin, fldsec, fldoption):
+            m = self.nameRE.match(f._name)
+            i = int(m[1])
+            if self.seq:
+                assert self.seq == i
+            else:
+                self.seq = i
+            f._name = m[2]
+            self._specs.append(f)
+        self._name = f"auto_timing{self.seq}"
+
+    def __str__(self):
+        return f"AutoTiming({self._seq})"
+
+    def make_Qt(self, ostr, leader):
+        ostr.write(f'{leader}self.{self._name} = BAutoTimingWidget({self.seq}, {self._specs[-1].optionString()})\n')
+        ostr.write(f"{leader}self._fields['{self._name}'] = self.{self._name}\n")
+        return self._name
+
     
 class JSPParser(HTMLParser):
     """

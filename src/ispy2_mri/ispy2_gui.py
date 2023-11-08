@@ -206,6 +206,26 @@ class BLineEdit(QLineEdit, BreastWidget):
 	def fromdb(self, v):
 		self.setText(v)
 
+	def setMaxLength(self, n: int, char="m") -> None:
+		"""
+		set maximum number of characters to n.
+
+		Additionally, resize the width to match; the superclass often
+		leaves the width excessive.  Allow enough space for n copies of char.
+
+		See https://stackoverflow.com/a/47307180 for details of the translation
+		from characters to pixels.  But it seems a bit dated.
+
+		In experiments, overriding preferredSize() seems ineffective
+		"""
+		super().setMaxLength(n)
+		fm = self.fontMetrics()
+		m = self.textMargins()
+		c = self.contentsMargins()
+		w = (n+1)*fm.horizontalAdvance(char)+m.left()+m.right()+c.left()+c.right()
+		self.setMaximumWidth(w)
+
+
 class BIntEdit(BLineEdit):
 	def todb(self):
 		txt = super().todb().strip()
@@ -275,6 +295,7 @@ class BComboBox(QComboBox, BreastWidget):
 	def clear(self):
 		self.setEditText("")
 		self.setCurrentIndex(-1)
+		self.setPlaceholderText("")
 		self.setToolTip("Please make a selection.")
 
 
@@ -371,6 +392,93 @@ class BCheckBox(QCheckBox, BreastWidget):
 	def clear(self):
 		self.setChecked(False)
 
+class BAutoTimingWidget(QGroupBox, BreastWidget):
+	"""
+	Groups together 3 fields related to auto-timing.
+
+	Unlike every other widget, this corresponds to 3 separate fields
+	in the database.  To support that, db_values() is  a generator that
+	yields those 3 fields in the conventional order.
+
+	When receiving info from a plain text file, a single line combines
+	all 3 fields.
+	"""
+	def __init__(self, i:int, options, parent=None):
+		"""
+		i is the index indicating auto-timing 1 or 2
+		options is a list of  alternative for the options widget
+		"""
+		QGroupBox.__init__(self, f"Auto Timing #{i}", parent)
+		self.seq = i
+		self.setFlat(True)
+		layout = QHBoxLayout(self)
+		self._minwidg = self._makemin()
+		self._secwidg = self._makesec()
+		self._optionwidg = self._makeoption(options)
+		layout.addWidget(self._minwidg)
+		layout.addWidget(self._secwidg)
+		layout.addWidget(self._optionwidg)
+		# it seems the tab order is set already, but just in case
+		QWidget.setTabOrder(self._minwidg, self._secwidg)
+		QWidget.setTabOrder(self._secwidg, self._optionwidg)
+
+	def _makemin(self):
+		w = BLineEdit(self)
+		w.setPlaceholderText("Minutes")
+		w.setToolTip("Minutes")
+		# on development machine the advanceWidth of any digit is 6, of m is 11
+		# and the font metric's maxWith (widest character) is 32.
+		w.setMaxLength(8, char="8")
+		return w
+
+	def _makesec(self):
+		w = BLineEdit(self)
+		w.setPlaceholderText("Seconds")
+		w.setToolTip(("Seconds"))
+		w.setMaxLength(4, char="8")
+		return w
+
+	def _makeoption(self, options):
+		cb = BComboBox(self)
+		cb.addItem("", -1)
+		# hack for a value that sometimes occurs, but not in original interface
+		if self.seq == 2:
+			cb.addItem("4", 4)
+		for x in options:
+			# avoid duplicate entries for ""
+			if x != "":
+				cb.addItem(str(x), x)
+		cb.setCurrentIndex(-1)
+		return cb
+
+	def _mydata(self):
+		"generator for all my data widgets"
+		yield self._minwidg
+		yield self._secwidg
+		yield self._optionwidg
+
+	def clear(self):
+		for w in self._mydata():
+			w.clear()
+
+	def todb(self):
+		"unlike all other widgets, returns a tuple"
+		return (w.todb() for w in self._mydata())
+
+	def fromdb(self, v):
+		raise NotImplementedError("No single database entry corresponds to auto_timing")
+
+	timingRE = re.compile(r"(\d*):(\d+)\s+\((\d)\)")
+	def fromtext(self, v: str):
+		m = self.timingRE.match(v)
+		if m:
+			for x, w in zip(m.groups(), self._mydata):
+				w.fromtext(x)
+		else:
+			# really should do more
+			# eg set placeholder in first field, change colors....
+			raise UnexpectedInputError(v)
+
 
 class BreastForm(QDialog):
 
@@ -417,9 +525,9 @@ class BreastForm(QDialog):
 						case 'Tumor Volume':
 							self.tumor_volume_submitted.setText(v)
 						case 'Early Post Timing':
-							self._set_auto_timing(1, v)
+							self.auto_timing1.fromtext(v)
 						case 'Late Post Timing':
-							self._set_auto_timing(2, v)
+							self.auto_timing2.fromtext(v)
 						case 'PE Threshold':
 							self._set_pct(self.pe_threshold, v)
 						case 'Scan Duration':
@@ -466,18 +574,6 @@ class BreastForm(QDialog):
 			self.fov2.setText(m.group(2))
 		else:
 			raise UnexpectedInputError(f"{v} value unparseable for FOV")
-
-	timingRE = re.compile(r"(\d*):(\d+)\s+\((\d)\)")
-	def _set_auto_timing(self, n:int, v:str):
-		"""set values from text file into timing fields
-		n  index of field to insert, 1 or 2
-		v	field value, usually from text file
-		"""
-		m = self.timingRE.match(v)
-		(m, s, x) = m.groups()
-		getattr(self, f"auto_timing{n}_min").setText(m)
-		getattr(self, f"auto_timing{n}_sec").setText(s)
-		getattr(self, f"auto_timing{n}_option").setCurrentText(x)
 
 	def _mark_automatic(self, form, widget):
 		"""
@@ -539,12 +635,17 @@ class BreastForm(QDialog):
 			"volume_calculation",
 			"site",
 			"tumor_volume_submitted",
-			"auto_timing1_min",
-			"auto_timing1_sec",
-			"auto_timing1_option",
-			"auto_timing2_min",
-			"auto_timing2_sec",
-			"auto_timing2_option",
+
+			# "auto_timing1_min",
+			# "auto_timing1_sec",
+			# "auto_timing1_option",
+			# "auto_timing2_min",
+			# "auto_timing2_sec",
+			# "auto_timing2_option",
+			# instead use
+			"auto_timing1",
+			"auto_timing2",
+
 			"scan_duration",
 			"pe_threshold",
 			"special_handling",
@@ -607,7 +708,12 @@ class BreastForm(QDialog):
 			case _:
 				# none of special cases matched
 				if field in self._fields:
-					yield self._fields[field].todb()
+					vs = self._fields[field].todb()
+					if isinstance(vs, list):
+						for v in vs:
+							yield v
+					else:
+						yield vs
 				else:
 					yield None
 
@@ -868,28 +974,14 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		group = self.tumor_volume_submitted
 		self.outer.addRow("Tumor Volume Submitted", group)
 		self._mark_automatic(self.outer, group)
-		self.auto_timing1_min = BLineEdit()
-		self._fields['auto_timing1_min'] = self.auto_timing1_min
-		self.auto_timing1_sec = BLineEdit()
-		self._fields['auto_timing1_sec'] = self.auto_timing1_sec
-		self.auto_timing1_option = BComboBox()
-		self.auto_timing1_option.addItems(["", "1", "2", "3", "4"])
-		self._fields['auto_timing1_option'] = self.auto_timing1_option
-		self.auto_timing2_min = BLineEdit()
-		self._fields['auto_timing2_min'] = self.auto_timing2_min
-		self.auto_timing2_sec = BLineEdit()
-		self._fields['auto_timing2_sec'] = self.auto_timing2_sec
-		self.auto_timing2_option = BComboBox()
-		self.auto_timing2_option.addItems(["", "5", "6", "7", "8"])
-		self._fields['auto_timing2_option'] = self.auto_timing2_option
+		self.auto_timing1 = BAutoTimingWidget(1, ["", "1", "2", "3", "4"])
+		self._fields['auto_timing1'] = self.auto_timing1
+		self.auto_timing2 = BAutoTimingWidget(2, ["", "5", "6", "7", "8"])
+		self._fields['auto_timing2'] = self.auto_timing2
 		group = QGroupBox()
 		box = FlowLayout()
-		box.addWidget(self.auto_timing1_min)
-		box.addWidget(self.auto_timing1_sec)
-		box.addWidget(self.auto_timing1_option)
-		box.addWidget(self.auto_timing2_min)
-		box.addWidget(self.auto_timing2_sec)
-		box.addWidget(self.auto_timing2_option)
+		box.addWidget(self.auto_timing1)
+		box.addWidget(self.auto_timing2)
 		group.setLayout(box)
 		self.outer.addRow("Auto Timing", group)
 		self._mark_automatic(self.outer, group)
