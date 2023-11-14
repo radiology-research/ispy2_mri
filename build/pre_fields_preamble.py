@@ -561,8 +561,8 @@ class BAutoTimingWidget(QWidget, BreastWidget):
 			w.clear()
 
 	def todb(self):
-		"unlike all other widgets, returns a tuple"
-		return (w.todb() for w in self._mydata())
+		"returns a list"
+		return [w.todb() for w in self._mydata()]
 	
 	def fromdb(self, v):
 		raise NotImplementedError("No single database entry corresponds to auto_timing")
@@ -601,8 +601,8 @@ class BFOV(QWidget, BreastWidget):
 		self.fov2.clear()
 
 	def todb(self):
-		"returns a tuple of values for separate fields"
-		return (self.fov1.todb(), self.fov2.todb())
+		"returns a list of values for separate fields"
+		return [self.fov1.todb(), self.fov2.todb()]
 	
 	def fromdb(self, v):
 		raise NotImplementedError("No single database entry corresponds to fov")
