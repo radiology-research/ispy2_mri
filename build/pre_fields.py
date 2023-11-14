@@ -16,6 +16,14 @@
 #  tqt.py   or name of your choice.  The generated application.
 
 ## To Do
+# Uniform handling of reading values from file, including errors
+  # colorize on error, and add tooltips, for any fromtext method
+  # be sure to remove that if things are OK
+# check write to database
+  # esp widgets with multiple values
+  # and the pe_threshold, which should be a number
+# why no tooltips for the blank case?
+
 # recreate writing process of jsp
     # mri_code = uk -> mri_date = NULL
     # logic of java getDateString and getDateCode
@@ -209,6 +217,10 @@ class Fixer:
                 section.inputs = []
                 section.addInput(AutoTimingField(*(oldfields[0:3])))
                 section.addInput(AutoTimingField(*(oldfields[3:6])))
+                return False
+            case "FOV":
+                # removes fov1 and fov2 from top level
+                section.inputs = [CustomField("fov", "BFOV()")]
                 return False
         return section.des2[0] in ("Special Handling necessary (header reading, other)",
                                    "Problems loading on AEGIS" )
@@ -601,7 +613,21 @@ class AutoTimingField:
         ostr.write(f'{leader}self.{self._name} = BAutoTimingWidget({self.seq}, {self._specs[-1].optionString()})\n')
         ostr.write(f"{leader}self._fields['{self._name}'] = self.{self._name}\n")
         return self._name
+    
+class CustomField:
+    "Allows arbtrary run-time widgets to be selected"
+    def __init__(self, name:str, ctor:str):
+        "a field named name will be constructed by calling ctor"
+        self._name = name
+        self._ctor = ctor
 
+    def __str__(self):
+        return self._ctor
+    
+    def make_Qt(self, ostr, leader):
+        ostr.write(f'{leader}self.{self._name} = {self._ctor}\n')
+        ostr.write(f"{leader}self._fields['{self._name}'] = self.{self._name}\n")
+        return self._name
     
 class JSPParser(HTMLParser):
     """

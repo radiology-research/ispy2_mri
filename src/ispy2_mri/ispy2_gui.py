@@ -498,6 +498,41 @@ class BAutoTimingWidget(QWidget, BreastWidget):
 			# eg set placeholder in first field, change colors....
 			raise UnexpectedInputError(v)
 
+class BFOV(QWidget, BreastWidget):
+	"""
+	For FOV, which has 2 separate fields in the database.
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.fov1 = BIntEdit()
+		self.sep = QLabel("x")
+		self.fov2 = BIntEdit()
+		layout = QHBoxLayout(self)
+		self.setLayout(layout)
+		layout.addWidget(self.fov1)
+		layout.addWidget(self.sep)
+		layout.addWidget(self.fov2)
+
+	def clear(self):
+		self.fov1.clear()
+		self.fov2.clear()
+
+	def todb(self):
+		"returns a tuple of values for separate fields"
+		return (self.fov1.todb(), self.fov2.todb())
+
+	def fromdb(self, v):
+		raise NotImplementedError("No single database entry corresponds to fov")
+
+	FOVRE = re.compile(r"([0-9.]+)\s+x\s+([0-9.]+)")
+	def fromtext(self, v: str):
+		"set value like '32.0 x 32.0' into fov fields"
+		m = self.FOVRE.match(v)
+		if m:
+			self.fov1.fromtext(m.group(1))
+			self.fov2.fromtext(m.group(2))
+		else:
+			raise UnexpectedInputError(f"{v} value unparseable for FOV")
 
 class BreastForm(QDialog):
 
@@ -563,7 +598,7 @@ class BreastForm(QDialog):
 								case _:
 									raise UnexpectedInputError(f"Unrecognized value {v} for MOCO")
 						case 'FOV':
-							self._set_fov(v)
+							self.fov.fromtext(v)
 						case _:
 							raise UnexpectedInputError(f"Can't handle input: {line}")
 
@@ -574,16 +609,6 @@ class BreastForm(QDialog):
 					raise UnexpectedInputError(f"Can't handle mystery line: {line}")
 		print(r)
 		return r
-
-	FOVRE = re.compile(r"([0-9.]+)\s+x\s+([0-9.]+)")
-	def _set_fov(self, v: str):
-		"set value like '32.0 x 32.0' into fov fields"
-		m = self.FOVRE.match(v)
-		if m:
-			self.fov1.setText(m.group(1))
-			self.fov2.setText(m.group(2))
-		else:
-			raise UnexpectedInputError(f"{v} value unparseable for FOV")
 
 	def _mark_automatic(self, form, widget):
 		"""
@@ -1034,15 +1059,9 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		self._fields['comments'] = self.comments
 		group = self.comments
 		self.outer.addRow("Comments", group)
-		self.fov1 = BIntEdit()
-		self._fields['fov1'] = self.fov1
-		self.fov2 = BIntEdit()
-		self._fields['fov2'] = self.fov2
-		group = QGroupBox()
-		box = FlowLayout()
-		box.addWidget(self.fov1)
-		box.addWidget(self.fov2)
-		group.setLayout(box)
+		self.fov = BFOV()
+		self._fields['fov'] = self.fov
+		group = self.fov
 		self.outer.addRow("FOV", group)
 		self._mark_automatic(self.outer, group)
 		self.moco = BCheckBox(self)
