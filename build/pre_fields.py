@@ -235,7 +235,7 @@ class Fixer:
             fld.replace_choices(["", "1", "A3w", "A6w", "A12w", "B3w", "B6w", "B12w",
                                  "S1", "5", "2", "2.5", "3", "3.5", "4"])
             return False
-        # site needs more work and is not a LineEdit
+        # site is not a LineEdit
         if fld._name in ("deviation_late_exam_overdue",
                         #"site",
                         "pe_threshold",
@@ -245,11 +245,15 @@ class Fixer:
         if fld._name == "scan_duration":
             fld.setConstruct("BNumEdit(p=5, s=2)")
             return False
+        if fld._name in ("pe_threshold", "bg_grey_threshold"):
+            fld.setConstruct("BPctEdit()")
+            return False
         if fld._name == "comments":
             # 4 rows in the jsp specification, but space is tight.
             # The BTextEdit widget can expand, but the next value limits how 
             # far it can contract.
             fld._rows = 3
+            return False
         return self.skipDatesRE.match(fld._name) or \
             fld._name in ("deviation", "deviation_other_reason")
 

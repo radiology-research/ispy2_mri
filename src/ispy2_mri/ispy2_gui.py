@@ -225,6 +225,26 @@ class BLineEdit(QLineEdit, BreastWidget):
 		w = (n+1)*fm.horizontalAdvance(char)+m.left()+m.right()+c.left()+c.right()
 		self.setMaximumWidth(w)
 
+class BPctEdit(BLineEdit):
+	"""
+	Interprets entered values as percentages.
+	Strips % from text from file.
+
+	This is used for 2 fields: pe_threshold and bg_grey_threshold.
+	Unfortunately the former is type int in database while latter is
+	type varchar.  So the first would more properly be a subclass of
+	BIntEdit.
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def fromtext(self, v: str):
+		"""set a percent value into widget, removing %
+		"""
+		v = v.strip()
+		if v[-1] == "%":
+			v = v[:-1]
+		super().fromtext(v)
 
 class BIntEdit(BLineEdit):
 	def todb(self):
@@ -396,9 +416,9 @@ class BAutoTimingWidget(QGroupBox, BreastWidget):
 	"""
 	Groups together 3 fields related to auto-timing.
 
-	Unlike every other widget, this corresponds to 3 separate fields
-	in the database.  To support that, db_values() is  a generator that
-	yields those 3 fields in the conventional order.
+	Unlike most other widgets, this corresponds to 3 separate fields
+	in the database.  todb() returns those 3 fields in the conventional
+	order.
 
 	When receiving info from a plain text file, a single line combines
 	all 3 fields.
@@ -529,11 +549,11 @@ class BreastForm(QDialog):
 						case 'Late Post Timing':
 							self.auto_timing2.fromtext(v)
 						case 'PE Threshold':
-							self._set_pct(self.pe_threshold, v)
+							self.pe_threshold.fromtext(v)
 						case 'Scan Duration':
 							self.scan_duration.setText(v)
 						case 'Gray Threshold':
-							self._set_pct(self.bg_grey_threshold, v)
+							self.bg_grey_threshold.fromtext(v)
 						case 'MOCO':
 							v = v.lower()
 							match v:
@@ -555,15 +575,6 @@ class BreastForm(QDialog):
 					raise UnexpectedInputError(f"Can't handle mystery line: {line}")
 		print(r)
 		return r
-
-	def _set_pct(self, widget, v: str):
-		"""set a percent value into widget, removing %
-		widget is assumed to be a QLineEdit, or at least something that responds to setText().
-		"""
-		v = v.strip()
-		if v[-1] == "%":
-			v = v[:-1]
-		widget.setText(v)
 
 	FOVRE = re.compile(r"([0-9.]+)\s+x\s+([0-9.]+)")
 	def _set_fov(self, v: str):
@@ -995,7 +1006,7 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		group = self.pe_threshold
 		self.outer.addRow("PE Threshold Processed", group)
 		self._mark_automatic(self.outer, group)
-		self.bg_grey_threshold = BLineEdit()
+		self.bg_grey_threshold = BPctEdit()
 		self._fields['bg_grey_threshold'] = self.bg_grey_threshold
 		group = self.bg_grey_threshold
 		self.outer.addRow("Background/Grey Threshold", group)
