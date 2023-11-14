@@ -412,7 +412,7 @@ class BCheckBox(QCheckBox, BreastWidget):
 	def clear(self):
 		self.setChecked(False)
 
-class BAutoTimingWidget(QGroupBox, BreastWidget):
+class BAutoTimingWidget(QWidget, BreastWidget):
 	"""
 	Groups together 3 fields related to auto-timing.
 
@@ -428,9 +428,8 @@ class BAutoTimingWidget(QGroupBox, BreastWidget):
 		i is the index indicating auto-timing 1 or 2
 		options is a list of  alternative for the options widget
 		"""
-		QGroupBox.__init__(self, f"Auto Timing #{i}", parent)
+		super().__init__(parent)
 		self.seq = i
-		self.setFlat(True)
 		layout = QHBoxLayout(self)
 		self._minwidg = self._makemin()
 		self._secwidg = self._makesec()
