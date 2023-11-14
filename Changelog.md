@@ -2,7 +2,7 @@
 
 This describes user-visible changes, not changes to the internals.
 
-## [0.1.0] - prerelease
+## [0.1.0] - 2023-11-14 - Ross Boylan <ross.boylan@ucsf.edu>
 
 ### Added
 
