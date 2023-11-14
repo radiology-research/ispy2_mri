@@ -562,13 +562,16 @@ class BFOV(QWidget, BreastWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.fov1 = BIntEdit()
+		self.fov1.setToolTip("FOV1")
 		self.sep = QLabel("x")
 		self.fov2 = BIntEdit()
+		self.fov2.setToolTip("FOV2")
 		layout = QHBoxLayout(self)
 		self.setLayout(layout)
 		layout.addWidget(self.fov1)
 		layout.addWidget(self.sep)
 		layout.addWidget(self.fov2)
+
 
 	def clear(self):
 		self.fov1.clear()

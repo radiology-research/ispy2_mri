@@ -9,23 +9,16 @@ This describes user-visible changes, not changes to the internals.
 - Clear all fields after `Save` and before reading in a new parameter file.  Closes #6.
   Why both?  Someone might make some entries in the form, accidentally or
   deliberately, after hitting `Save` and before reading in a new file.
-- Improved handling when input file's `Site` or `Visit` don't match allowed values (part of #11)
-  - Boxes that don't match have red text of  `?` followed by the value in file on yellow background
+- Improved handling when input file's text doesn't match allowed values (Closes #11)
+  - ComboBoxes that don't match have red text of  `?` followed by the value in file on yellow background
+  - Checkboxes that don't match will be in yellow, but considerd as unchecked
   - With explanatory tooltip
 
 ### Changed
 
 - Site now starts blank (not `Georgetown`), and has an "Other" option. (Fixes #10 after changing goal)
 - Visit starts blank (not `1`) and allows selection set to blank (tangential hit #11).
-
-
-### Fixed
-
-- Fixed item
-
-### Removed
-
-- Remove item
+- Autotiming and FOV fields have different appearance.
 
 
 ## [0.0.7] - 2023-10-25 - Ross Boylan <ross.boylan@ucsf.edu>
