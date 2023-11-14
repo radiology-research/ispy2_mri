@@ -415,6 +415,8 @@ class BCheckBox(QCheckBox, BreastWidget):
 		QCheckBox.__init__(self, parent)
 		self.asText = asText
 		self._val = val
+		# next connection clears errors on user selection
+		self.clicked.connect(self.setOK)
 
 	def val(self):
 		return self._val
@@ -442,8 +444,30 @@ class BCheckBox(QCheckBox, BreastWidget):
 				self.setChecked(False)
 		# otherwise do nothing. maybe throw error
 
+	def fromtext(self, v:str):
+		v = v.lower()
+		match v:
+			case 'n' | 'no'| 'none':
+				self.setChecked(False) # probably the default
+				self.setOK()
+			case 'y' | 'yes':
+				self.setChecked(True)
+				self.setOK()
+			case _:
+				self.setChecked(False)
+				raise UnexpectedInputError(f"Unrecognized value {v} for checkbox")
+
 	def clear(self):
 		self.setChecked(False)
+
+	def setError(self, v):
+		super().setError()
+		self.setToolTip(f"Unrecognized value {v}. Please select or not as needed.")
+
+	@Slot()
+	def setOK(self):
+		self.setToolTip("")
+		super().setOK()
 
 class BAutoTimingWidget(QWidget, BreastWidget):
 	"""
@@ -586,61 +610,38 @@ class BreastForm(QDialog):
 		parse the file in path and populate the appropriate fields
 		"""
 		r = {}
+		# guide keys are line headers in text file
+		# values are names of fields as strings
+		guide = {
+			'I-SPY ID': "ispy2_id",
+		   	'Date': "mri_date",
+			'Visit ID': "visit_number",
+			'Institution': "site",
+			'Breast': "breast", # currently needs to be v.lower()
+			'Tumor Volume': "tumor_volume_submitted",
+			'Early Post Timing': "auto_timing1",
+			'Late Post Timing': "auto_timing2",
+			'PE Threshold': "pe_threshold",
+			'Scan Duration': "scan_duration",
+			'Gray Threshold': "bg_grey_threshold",
+			'MOCO': "moco",
+			'FOV': "fov"
+			}
 		with path.open("rt") as fin:
 			for line in fin:
 				m = self.paramRE.match(line)
 				if m:
 					v = m.group('val')
-					match m.group('var'):
-						# probably these should all set the field with fromtext, with logic moved there
-						case 'I-SPY ID':
-							self.ispy2_id.setText(v)
-						case 'Date':
-							self.mri_date.fromtext(v)
-						case 'Visit ID':
-							try:
-								self.visit_number.fromtext(v)
-							except UnexpectedInputError as e:
-								pass
-						case 'Institution':
-							try:
-								self.site.fromtext(v)
-							except UnexpectedInputError as e:
-								pass
-						case 'Breast':
-							self.breast.setCurrentText(v.lower())
-						case 'Tumor Volume':
-							self.tumor_volume_submitted.setText(v)
-						case 'Early Post Timing':
-							self.auto_timing1.fromtext(v)
-						case 'Late Post Timing':
-							self.auto_timing2.fromtext(v)
-						case 'PE Threshold':
-							self.pe_threshold.fromtext(v)
-						case 'Scan Duration':
-							self.scan_duration.setText(v)
-						case 'Gray Threshold':
-							self.bg_grey_threshold.fromtext(v)
-						case 'MOCO':
-							v = v.lower()
-							match v:
-								case 'n' | 'no'| 'none':
-									self.moco.setChecked(False) # probably the default
-								case 'y' | 'yes':
-									self.moco.setChecked(True)
-								case _:
-									raise UnexpectedInputError(f"Unrecognized value {v} for MOCO")
-						case 'FOV':
-							self.fov.fromtext(v)
-						case _:
-							raise UnexpectedInputError(f"Can't handle input: {line}")
-
-
-						#'I-SPY ID': '54346', 'Date': '01/24/2023 15:31:28', 'Visit ID': 'A3W', 'Institution': 'UCSF Medical Center PCMB', 'Breast': 'L', 'Tumor Volume': '21.946', 'Early Post Timing': '2:28 (2)', 'Late Post Timing': '7:25 (5)', 'PE Threshold': '70%', 'Scan Duration': '99.0', 'Gray Threshold': '60%', 'MOCO': 'None', 'FOV': '38.0 x 38.0'}
-					r[m.group('var')] = m.group('val')
+					header = m.group('var')
+					r[header] = v
+					varname = guide[header]
+					try:
+						getattr(self, varname).fromtext(v)
+					except UnexpectedInputError as e:
+						pass
 				elif line.strip():
 					raise UnexpectedInputError(f"Can't handle mystery line: {line}")
-		print(r)
+		#print(r)
 		return r
 
 	def _mark_automatic(self, form, widget):
@@ -727,8 +728,11 @@ class BreastForm(QDialog):
 			"bg_grey_threshold",
 			"injection_rate",
 			"flush_volume",
-			"fov1",
-			"fov2",
+			# "fov1",
+			# "fov2",
+			# instead use
+			"fov",
+
 			"moco",
 			"motion_brtool",
 			"report_received_date",
