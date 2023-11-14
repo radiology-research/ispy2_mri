@@ -353,6 +353,28 @@ class BComboBox(QComboBox, BreastWidget):
 		self.setOK()
 		self.setPlaceholderText("")
 
+class BLRBox(BComboBox):
+	"""
+	Widget to select Left or Right.
+	Main complication is dealing with case; the database
+	uses lower case but the presentation is in upper case.
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.addItems(["", "L", "R"])
+
+	def setVal(self, v:str):
+		x = v.strip().lower()
+		match x:
+			case 'l' | 'left':
+				return super().setVal("L")
+			case 'r' | 'right':
+				return super().setVal('R')
+		self.setCurrentIndex(-1)
+		return -1
+
+	def todb(self):
+		return super().todb().lower()
 
 class BSiteComboBox(BComboBox):
 	"""
@@ -961,8 +983,7 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		group = self.mri_date
 		self.outer.addRow("MRI Date", group)
 		self._mark_automatic(self.outer, group)
-		self.breast = BComboBox()
-		self.breast.addItems(["", "r", "l"])
+		self.breast = BLRBox()
 		self._fields['breast'] = self.breast
 		group = self.breast
 		self.outer.addRow("Breast", group)

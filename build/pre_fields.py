@@ -222,6 +222,9 @@ class Fixer:
                 # removes fov1 and fov2 from top level
                 section.inputs = [CustomField("fov", "BFOV()")]
                 return False
+            case "Breast":
+                section.replaceInput(CustomField("breast", "BLRBox()"))
+                return False
         return section.des2[0] in ("Special Handling necessary (header reading, other)",
                                    "Problems loading on AEGIS" )
     

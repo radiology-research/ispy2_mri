@@ -13,12 +13,15 @@ This describes user-visible changes, not changes to the internals.
   - ComboBoxes that don't match have red text of  `?` followed by the value in file on yellow background
   - Checkboxes that don't match will be in yellow, but considerd as unchecked
   - With explanatory tooltip
+- Breast L/R now accepts "left" or "right", any case, as inputs from text file
 
 ### Changed
 
 - Site now starts blank (not `Georgetown`), and has an "Other" option. (Fixes #10 after changing goal)
 - Visit starts blank (not `1`) and allows selection set to blank (tangential hit #11).
 - Autotiming and FOV fields have different appearance.
+- Breast L/R now appears as uppercase, continues to write data lowercase, accepts any case as input
+
 
 
 ## [0.0.7] - 2023-10-25 - Ross Boylan <ross.boylan@ucsf.edu>
