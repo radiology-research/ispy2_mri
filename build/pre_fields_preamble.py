@@ -77,6 +77,20 @@ class BreastWidget:
 		"return True if I contain a valid value"
 		return True
 	
+	### following services provided as an optional convenience
+	def setError(self):
+		"""
+		Indicate that something is wrong with the values in this widget.
+		"""
+		self.setStyleSheet("* {color: red; background-color: yellow}")
+
+	def setOK(self):
+		"""
+		Remove any error conditions from this widget.
+		"""
+		self.setStyleSheet("")
+
+	
 class BSmallDateWidget(QWidget, BreastWidget):
 	"""Allow date entry via 3 drop-down boxes in a row.
 	"""
@@ -277,28 +291,52 @@ class BComboBox(QComboBox, BreastWidget):
 	def todb(self):
 		return self.currentText()
 	
+	def setVal(self, v:str)->int :
+		"""
+		Set the widget to v provided it is one of the allowed values.
+		Returns the index of the selection, or -1 if no match.
+		Does NOT throw an error.
+
+		The code is this specific way because others that sound as if
+		they should work do not.
+		setEditText() only affects the display if the widget is editable.
+		Mine usually are not, but neither setEditText() nor setCurrentText()
+		change the current index, despite documentation that seems to say they
+		do.  Also, if there is a failure, the selection is left at the previous
+		value.  This code removes the previous selection.
+		"""
+		i = self.findText(v)
+		self.setCurrentIndex(i)
+		return i
+	
 	def fromdb(self, v):
-		self.setEditText(v)
+		self.setVal(v)
 
 	def fromtext(self, v: str):
 		if v:
-			self.setEditText(v)
+			i = self.setVal(v)
 		else:
 			self.clear()
 			# NB: do not raise exception
 			return
-		if self.currentIndex()>=0:
+		if i >= 0:
 			# real data, successfully set
 			# noteIndexedChange should be triggered automatically and clean up
 			return
 		# No match
+		self.setError(v)
+
+	def setError(self, v:str):
 		self.setPlaceholderText(f"? {v}")
 		self.setToolTip(f"Unrecognized text. Please select from drop-down.")
-		self.setStyleSheet("""BComboBox {background-color: yellow}
-					 BComboBox {color: red}
-					 """)
+		super().setError()
 		raise UnexpectedInputError(v)
 	
+	def setOK(self):
+		self.setToolTip("")
+		super().setOK()
+		# leave placeholder text, which should be invisible	
+
 	@Slot()
 	def noteIndexChanged(self, i):
 		# handling of non-selection varies by context
@@ -307,17 +345,14 @@ class BComboBox(QComboBox, BreastWidget):
 			return
 		# otherwise, a valid data selection has been made
 		# undo all the weird stuff
-		self.setToolTip("")
-		self.setStyleSheet("")
-		# leave placeholder text, which should be invisible
-
+		self.setOK()
 
 
 	def clear(self):
 		self.setEditText("")
 		self.setCurrentIndex(-1)
+		self.setOK()
 		self.setPlaceholderText("")
-		self.setToolTip("Please make a selection.")
 
 
 class BSiteComboBox(BComboBox):
@@ -361,6 +396,7 @@ class BSiteComboBox(BComboBox):
 			if r[1] == v:
 				self.setCurrentIndex(i)
 				return
+		self.setError(v)
 		raise UnexpectedInputError(f"Unknown site id {v} read from database.")
 	
 	def fromtext(self, v: str):
@@ -371,11 +407,8 @@ class BSiteComboBox(BComboBox):
 				self.setCurrentIndex(i)
 				return
 		self.setCurrentIndex(-1)
-		self.setPlaceholderText(f"? {v}")
+		self.setError(v)
 		self.setToolTip(f"Unrecognized site. Please select from drop-down.")
-		self.setStyleSheet("""BSiteComboBox {background-color: yellow}
-					 BSiteComboBox {color: red}
-					 """)
 		raise UnexpectedInputError(v)
 
 class BCheckBox(QCheckBox, BreastWidget):
@@ -492,7 +525,7 @@ class BAutoTimingWidget(QWidget, BreastWidget):
 	def fromtext(self, v: str):
 		m = self.timingRE.match(v)
 		if m:
-			for x, w in zip(m.groups(), self._mydata):
+			for x, w in zip(m.groups(), self._mydata()):
 				w.fromtext(x)
 		else:
 			# really should do more
