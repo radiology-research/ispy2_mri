@@ -253,7 +253,7 @@ class Fixer:
         # site is not a LineEdit
         if fld._name in ("deviation_late_exam_overdue",
                         #"site",
-                        "pe_threshold",
+                        #"pe_threshold",
                         "fov1", "fov2"):
             fld.setConstruct("BIntEdit()")
             return False

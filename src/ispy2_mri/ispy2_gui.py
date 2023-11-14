@@ -1086,7 +1086,7 @@ Additional values may have been changed in the ispy2_deviations table.""")
 		group = self.scan_duration
 		self.outer.addRow("Scan Duration", group)
 		self._mark_automatic(self.outer, group)
-		self.pe_threshold = BIntEdit()
+		self.pe_threshold = BPctEdit()
 		self._fields['pe_threshold'] = self.pe_threshold
 		group = self.pe_threshold
 		self.outer.addRow("PE Threshold Processed", group)
